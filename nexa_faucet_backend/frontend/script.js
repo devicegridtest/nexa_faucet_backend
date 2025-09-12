@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const captchaToken = grecaptcha.getResponse(); // hCaptcha usa la misma API que reCAPTCHA v2
+        const captchaToken = grecaptcha.getResponse();
         if (!captchaToken) {
             showMessage('Por favor completa el CAPTCHA.', 'error');
             return;
@@ -87,7 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             requestBtn.disabled = false;
             requestBtn.textContent = 'Solicitar 0.01 NEXA';
-            grecaptcha.reset(); // Resetear CAPTCHA
+            if (typeof grecaptcha !== 'undefined') {
+                grecaptcha.reset();
+            }
         }
     });
 
