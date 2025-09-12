@@ -51,19 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Obtener token de hCaptcha
-        const captchaWidget = document.querySelector('.h-captcha iframe');
-        if (!captchaWidget) {
-            showMessage('CAPTCHA no cargado. Recarga la página.', 'error');
-            return;
-        }
-
-        const captchaToken = grecaptcha.getResponse();
-        if (!captchaToken) {
-            showMessage('Por favor completa el CAPTCHA.', 'error');
-            return;
-        }
-
         requestBtn.disabled = true;
         requestBtn.textContent = 'Enviando...';
 
@@ -71,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('https://nexa-faucet-backend-5nxc.onrender.com/faucet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address, captcha: captchaToken }),
+                body: JSON.stringify({ address }), // ✅ Sin captcha
             });
 
             const data = await response.json();
@@ -87,9 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             requestBtn.disabled = false;
             requestBtn.textContent = 'Solicitar 0.01 NEXA';
-            if (typeof grecaptcha !== 'undefined') {
-                grecaptcha.reset();
-            }
         }
     });
 

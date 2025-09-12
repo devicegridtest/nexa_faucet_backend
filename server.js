@@ -1,20 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { Address } = require('@nexajs/address'); // ✅ Importado, ahora lo usamos
-const { sendFaucet, getWallet } = require('./wallet'); // ✅ Añadido getWallet
+const { Address } = require('@nexajs/address');
+const { sendFaucet, getWallet } = require('./wallet');
 const { canRequest, saveRequest } = require('./database');
-const HCaptcha = require('hcaptcha');
-const hcaptcha = new HCaptcha(process.env.HCAPTCHA_SECRET);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Render usa 10000 por defecto
 
+// ✅ Configuración de CORS (sin espacios en dominios)
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:5500', 'null', 'https://tudominio.com'],
+    origin: [
+        'null',
+        'http://localhost:3000',
+        'http://127.0.0.1:5500',
+        'http://127.0.0.1:8080',
+        'https://tudominio.com', // ✅ Espacio eliminado
+        'https://devicegridtest.org'
+    ],
     credentials: true,
     optionsSuccessStatus: 200
 }));
+
 app.use(express.json());
 
 // Middleware para logging
@@ -28,28 +35,17 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Faucet Backend Activo' });
 });
 
-// Ruta principal de faucet
+// Ruta principal de faucet (SIN CAPTCHA)
 app.post('/faucet', async (req, res) => {
-    const { address, captcha } = req.body; // ✅ Destructuramos TODO aquí, no dos veces
+    const { address } = req.body; // ✅ Solo address, sin captcha
 
     try {
-        // Validar CAPTCHA
-        if (!captcha) {
-            return res.status(400).json({ error: 'CAPTCHA requerido' });
-        }
-
-        try {
-            await hcaptcha.verify(captcha);
-        } catch (err) {
-            return res.status(400).json({ error: 'CAPTCHA inválido' });
-        }
-
         // Validar dirección
         if (!address || typeof address !== 'string') {
             return res.status(400).json({ error: 'Dirección requerida' });
         }
 
-        if (!Address.isValid(address)) { // ✅ Usamos la librería real
+        if (!Address.isValid(address)) {
             return res.status(400).json({ error: 'Dirección Nexa inválida' });
         }
 
@@ -62,7 +58,7 @@ app.post('/faucet', async (req, res) => {
         }
 
         // Enviar fondos
-        const amount = parseInt(process.env.FAUCET_AMOUNT);
+        const amount = parseInt(process.env.FAUCET_AMOUNT) || 1000000; // 0.01 NEXA por defecto
         const txid = await sendFaucet(address, amount);
 
         // Registrar solicitud
@@ -81,13 +77,14 @@ app.post('/faucet', async (req, res) => {
                             fields: [
                                 { name: "Dirección", value: `\`${address}\``, inline: true },
                                 { name: "Monto", value: `${amount / 100000000} NEXA`, inline: true },
-                                { name: "TXID", value: `[Ver en explorer](https://explorer.nexa.org/tx/${txid})`, inline: false }
+                                { name: "TXID", value: `[Ver en explorer](https://explorer.nexa.org/tx/${txid})`, inline: false } // ✅ Espacio eliminado
                             ],
                             timestamp: new Date().toISOString(),
                             footer: { text: "Nexa Faucet" }
                         }]
                     })
                 });
+                console.log('✅ Notificación enviada a Discord');
             } catch (err) {
                 console.error('❌ Error enviando a Discord:', err.message);
             }
@@ -111,12 +108,12 @@ app.post('/faucet', async (req, res) => {
     }
 });
 
-// Ruta para obtener saldo de la faucet (¡solo una vez!)
+// Ruta para obtener saldo de la faucet
 app.get('/balance', async (req, res) => {
     try {
         const wallet = getWallet();
         const balance = await wallet.getBalance();
-        const balanceInNEXA = (balance / 100000000).toFixed(4); // Convertir a NEXA
+        const balanceInNEXA = (balance / 100000000).toFixed(4);
 
         res.json({
             success: true,
@@ -132,7 +129,7 @@ app.get('/balance', async (req, res) => {
 
 // Ruta para obtener últimas transacciones
 app.get('/transactions', (req, res) => {
-    const db = require('./database').db; // ✅ Accedemos a la instancia de DB
+    const db = require('./database').db;
     db.all(`
         SELECT address, last_request 
         FROM requests 
@@ -140,6 +137,7 @@ app.get('/transactions', (req, res) => {
         LIMIT 5
     `, [], (err, rows) => {
         if (err) {
+            console.error('Error obteniendo transacciones:', err);
             return res.status(500).json({ error: 'Error obteniendo transacciones' });
         }
 
