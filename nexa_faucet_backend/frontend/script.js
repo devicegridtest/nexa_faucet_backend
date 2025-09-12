@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============== BALANCE ===============
     async function updateBalance() {
         try {
-            const response = await fetch('https://nexa-faucet-backend.onrender.com/balance');
+            const response = await fetch('https://nexa-faucet-backend-5nxc.onrender.com/balance');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
             const data = await response.json();
             if (data.success) {
                 document.getElementById('balance').textContent = data.balanceInNEXA;
@@ -14,11 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('balance').textContent = 'Error';
             }
         } catch (error) {
+            console.error('Error actualizando saldo:', error);
             document.getElementById('balance').textContent = 'Offline';
         }
     }
 
-    // Actualizar saldo al cargar y cada 30 segundos
     updateBalance();
     setInterval(updateBalance, 30000);
 
@@ -50,14 +51,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Obtener token de hCaptcha
+        const captchaWidget = document.querySelector('.h-captcha iframe');
+        if (!captchaWidget) {
+            showMessage('CAPTCHA no cargado. Recarga la página.', 'error');
+            return;
+        }
+
+        const captchaToken = grecaptcha.getResponse(); // hCaptcha usa la misma API que reCAPTCHA v2
+        if (!captchaToken) {
+            showMessage('Por favor completa el CAPTCHA.', 'error');
+            return;
+        }
+
         requestBtn.disabled = true;
         requestBtn.textContent = 'Enviando...';
 
         try {
-            const response = await fetch('https://nexa-faucet-backend.onrender.com/faucet', {
+            const response = await fetch('https://nexa-faucet-backend-5nxc.onrender.com/faucet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address }),
+                body: JSON.stringify({ address, captcha: captchaToken }),
             });
 
             const data = await response.json();
@@ -72,37 +86,50 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('❌ ' + error.message, 'error');
         } finally {
             requestBtn.disabled = false;
-            requestBtn.textContent = 'Solicitar 0.01 NEXA'; // Ajustado a 0.01 (coherente con backend)
+            requestBtn.textContent = 'Solicitar 0.01 NEXA';
+            grecaptcha.reset(); // Resetear CAPTCHA
         }
     });
 
     // =============== DONATION ADDRESS ===============
     async function loadDonationAddress() {
         try {
-            const response = await fetch('https://nexa-faucet-backend.onrender.com/balance');
+            const response = await fetch('https://nexa-faucet-backend-5nxc.onrender.com/balance');
+            if (!response.ok) throw new Error('No se pudo conectar al servidor');
             const data = await response.json();
             if (data.success) {
                 const donationElement = document.getElementById('donationAddress');
                 if (donationElement) {
                     donationElement.textContent = data.address;
                 }
+            } else {
+                throw new Error('Respuesta sin éxito del backend');
             }
         } catch (error) {
+            console.error('Error cargando dirección de donación:', error);
             const donationElement = document.getElementById('donationAddress');
             if (donationElement) {
-                donationElement.textContent = 'Error al cargar';
+                donationElement.textContent = 'Carga fallida. Inténtalo más tarde.';
             }
         }
     }
 
-    // Copiar dirección al portapapeles
+    // Copiar al portapapeles
     const copyBtn = document.getElementById('copyBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
             const donationElement = document.getElementById('donationAddress');
-            if (!donationElement) return;
+            if (!donationElement) {
+                alert('Elemento de dirección no encontrado.');
+                return;
+            }
 
-            const address = donationElement.textContent;
+            const address = donationElement.textContent.trim();
+            if (address.includes('Carga fallida') || address === 'Cargando...') {
+                alert('La dirección aún no está disponible. Por favor, espera.');
+                return;
+            }
+
             navigator.clipboard.writeText(address).then(() => {
                 copyBtn.textContent = '¡Copiado!';
                 setTimeout(() => {
@@ -110,11 +137,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 2000);
             }).catch(err => {
                 console.error('Error al copiar:', err);
-                showMessage('No se pudo copiar al portapapeles', 'error');
+                alert('No se pudo copiar. Intenta manualmente.');
             });
         });
     }
 
-    // Inicializar dirección de donación
+    // =============== LIVE TRANSACTIONS ===============
+    async function loadTransactions() {
+        try {
+            const response = await fetch('https://nexa-faucet-backend-5nxc.onrender.com/transactions');
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = await response.json();
+
+            const grid = document.getElementById('transactionsGrid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            if (data.success && data.transactions?.length > 0) {
+                data.transactions.forEach(tx => {
+                    const card = document.createElement('div');
+                    card.className = 'transaction-card';
+                    card.innerHTML = `
+                        <h3>🔑 Dirección</h3>
+                        <div class="address">${tx.shortAddress}</div>
+                        <div class="date">🕒 ${tx.date}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } else {
+                grid.innerHTML = '<p style="text-align:center;color:#aaa">No hay transacciones recientes</p>';
+            }
+        } catch (error) {
+            console.error('Error cargando transacciones:', error);
+            const grid = document.getElementById('transactionsGrid');
+            if (grid) {
+                grid.innerHTML = '<p style="text-align:center;color:#ff6b6b">Error al cargar transacciones</p>';
+            }
+        }
+    }
+
+    // Inicializar
     loadDonationAddress();
+    loadTransactions();
+    setInterval(loadTransactions, 30000);
 });
