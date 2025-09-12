@@ -12,11 +12,10 @@
     "dotenv": "^16.0.0",
     "@nexajs/wallet": "^x.x.x",
     "@nexajs/address": "^x.x.x",
-    "sqlite3": "^5.1.0",
-    "hcaptcha": "^0.2.0"
+    "sqlite3": "^5.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
   }
-
 }
+
