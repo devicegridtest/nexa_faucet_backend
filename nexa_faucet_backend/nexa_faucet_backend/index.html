@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexa Faucet | Recibe NEXA Gratis</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="style.css">
+    <!-- ✅ Cargamos hCaptcha en el head para que esté listo al renderizar el formulario -->
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">💧 Nexa Faucet</div>
+            <a href="https://discord.gg/tuinvitacion" class="discord-btn" target="_blank">
+                <img src="https://devicegridtest.org/icons/brand-discord.svg" alt="Discord">
+                Únete al Discord
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Recibe <strong>0.01 NEXA</strong> gratis cada <strong>24 horas</strong></h1>
+            <p>Perfecto para desarrolladores, testers y curiosos. ¡Sin trucos, sin spam!</p>
+        </div>
+    </section>
+
+    <!-- Balance Banner -->
+    <div class="container">
+        <div class="balance-banner">
+            💰 Saldo disponible: <span id="balance">Cargando...</span> NEXA
+        </div>
+    </div>
+
+    <!-- Faucet Form Section -->
+    <section class="faucet-section">
+        <div class="container">
+            <div class="card">
+                <h2>⬇️ Solicita tus NEXA</h2>
+                <div class="faucet-form">
+                    <input type="text" id="address" placeholder="nexa:tu_direccion_aqui..." required>
+                    <!-- ✅ Reemplaza TU_SITEKEY_AQUI por tu sitekey real de hCaptcha -->
+                    <div class="h-captcha" data-sitekey="TU_SITEKEY_AQUI"></div>
+                    <button id="requestBtn">Solicitar 0.01 NEXA</button>
+                </div>
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Transactions Section (inspirado en devicegridtest.org) -->
+    <section class="live-section">
+        <div class="container">
+            <h2>📡 Últimas transacciones</h2>
+            <div class="live-grid" id="transactionsGrid">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Guide Section -->
+    <section class="guide-section">
+        <div class="container">
+            <h2>📌 ¿Cómo funciona?</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h3>Obtén una dirección Nexa</h3>
+                        <p>Usa una wallet como Nexa Wallet, Liquality, o crea una en testnet.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h3>Pégala arriba</h3>
+                        <p>Copia y pega tu dirección que empieza con <code>nexa:</code></p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h3>¡Recibe fondos!</h3>
+                        <p>En segundos recibirás 0.01 NEXA. Límite: 1 vez cada 24 horas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Donation Section -->
+    <section class="donation-section">
+        <div class="container">
+            <h2>❤️ ¿Quieres apoyar esta faucet?</h2>
+            <p>¡Donaciones mantienen este servicio gratis para todos!</p>
+            <div class="donation-card">
+                <div class="address-display">
+                    <code id="donationAddress">Cargando...</code>
+                    <button id="copyBtn" class="copy-btn">📋 Copiar</button>
+                </div>
+                <p class="note">Envía NEXA a esta dirección para recargar la faucet.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>Hecho con 💜 para la comunidad Nexa. Proyecto open-source.</p>
+            <p><small>Esta faucet usa fondos de donaciones. ¿Quieres ayudar? Contáctanos en Discord.</small></p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
