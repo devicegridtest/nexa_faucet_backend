@@ -17,9 +17,8 @@ function getWallet() {
 
 async function sendFaucet(address, amountInSatoshis) {
     const wallet = getWallet();
-    
-    // Opcional: verifica balance antes de enviar
     const balance = await wallet.getBalance();
+    
     if (balance < amountInSatoshis) {
         throw new Error('Faucet sin fondos suficientes');
     }
